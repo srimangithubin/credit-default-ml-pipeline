@@ -1,0 +1,61 @@
+project:
+  name: "Credit-default-ml-pipeline"
+
+data:
+  raw_path: "data/raw/default_of_credit_card_clients.csv"
+  target_columns: "default.payment.next.month"
+  test_size: 0.2
+
+random_state: 999
+
+cross_validation:
+  n_splits: 5
+  shuffle: True
+
+training:
+  scoring: "f1"
+  n_jobs: -1
+
+outputs:
+  model_dir: "models"
+  report_dir: "reports"
+  best_model_path: "models/best_model.joblib"
+  cv_results_path: "reports/cv_results.csv"
+  test_results_path: "reports/test_results.csv"
+
+models:
+  logistic_regression:
+    enabled: true
+    params:
+      model__C: [0.1, 1.0, 10.0]
+      model__solver: ["liblinear"]
+
+  decision_tree:
+    enabled: true
+    params:
+      model__criterion: ["gini", "entropy"]
+      model__max_depth: [3, 5, 10, null]
+      model__min_samples_split: [2, 10, 20]
+      model__min_samples_leaf: [1, 5, 10]
+
+  random_forest:
+    enabled: true
+    params:
+      model__n_estimators: [100, 200]
+      model__max_depth: [5, 10, null]
+      model__min_samples_split: [2, 10]
+      model__min_samples_leaf: [1, 5]
+
+  gradient_boosting:
+    enabled: true
+    params:
+      model__n_estimators: [100, 200]
+      model__learning_rate: [0.05, 0.1]
+      model__max_depth: [3, 5]
+
+  xgboost:
+    enabled: true
+    params:
+      model__n_estimators: [100, 200]
+      model__learning_rate: [0.05, 0.1]
+      model__max_depth: [3, 5]
