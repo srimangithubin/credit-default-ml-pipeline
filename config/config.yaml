@@ -1,16 +1,19 @@
 project:
-  name: "Credit-default-ml-pipeline"
+  name: "credit-default-ml-pipeline"
 
 data:
   raw_path: "data/raw/default_of_credit_card_clients.csv"
-  target_columns: "default.payment.next.month"
+  processed_path: "data/processed/credit_default_cleaned.csv"
+  raw_target_column: "default payment next month"
+  target_column: "default_next_month"
   test_size: 0.2
+  csv_header_row: 1
 
 random_state: 999
 
 cross_validation:
   n_splits: 5
-  shuffle: True
+  shuffle: true
 
 training:
   scoring: "f1"
@@ -20,42 +23,57 @@ outputs:
   model_dir: "models"
   report_dir: "reports"
   best_model_path: "models/best_model.joblib"
-  cv_results_path: "reports/cv_results.csv"
+  cv_results_path: "reports/cv_results_before_tuning.csv"
+  tuned_results_path: "reports/tuned_model_results.csv"
   test_results_path: "reports/test_results.csv"
+  confusion_matrix_path: "reports/images/confusion_matrix.png"
+  roc_curve_path: "reports/images/roc_curve.png"
 
 models:
   logistic_regression:
     enabled: true
+    n_iter: 10
     params:
-      model__C: [0.1, 1.0, 10.0]
-      model__solver: ["liblinear"]
-
-  decision_tree:
-    enabled: true
-    params:
-      model__criterion: ["gini", "entropy"]
-      model__max_depth: [3, 5, 10, null]
-      model__min_samples_split: [2, 10, 20]
-      model__min_samples_leaf: [1, 5, 10]
+      model__C: [0.01, 0.1, 1, 10, 100]
+      model__solver: ["liblinear", "lbfgs"]
 
   random_forest:
     enabled: true
+    n_iter: 20
     params:
-      model__n_estimators: [100, 200]
-      model__max_depth: [5, 10, null]
-      model__min_samples_split: [2, 10]
-      model__min_samples_leaf: [1, 5]
+      model__n_estimators: [100, 200, 300]
+      model__max_depth: [4, 6, 8, 10, null]
+      model__min_samples_split: [2, 5, 10, 20]
+      model__min_samples_leaf: [1, 2, 5, 10]
+      model__max_features: ["sqrt", "log2"]
 
   gradient_boosting:
     enabled: true
+    n_iter: 20
     params:
-      model__n_estimators: [100, 200]
-      model__learning_rate: [0.05, 0.1]
-      model__max_depth: [3, 5]
+      model__n_estimators: [100, 200, 300]
+      model__learning_rate: [0.01, 0.05, 0.1, 0.2]
+      model__max_depth: [2, 3, 4]
+      model__min_samples_split: [2, 5, 10]
+      model__min_samples_leaf: [1, 2, 5]
+      model__subsample: [0.7, 0.8, 1.0]
 
   xgboost:
     enabled: true
+    n_iter: 20
     params:
-      model__n_estimators: [100, 200]
-      model__learning_rate: [0.05, 0.1]
-      model__max_depth: [3, 5]
+      model__n_estimators: [100, 200, 300]
+      model__learning_rate: [0.01, 0.05, 0.1, 0.2]
+      model__max_depth: [2, 3, 4, 5]
+      model__subsample: [0.7, 0.8, 1.0]
+      model__colsample_bytree: [0.7, 0.8, 1.0]
+
+final_model:
+  name: "Random_Forest"
+  selection_metric: "f1"
+  best_cv_f1: 0.543194
+  test_accuracy: 0.7884
+  test_precision: 0.519231
+  test_recall: 0.585895
+  test_f1: 0.550552
+  test_roc_auc: 0.784238
