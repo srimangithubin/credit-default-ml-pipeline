@@ -2,11 +2,11 @@ project:
   name: "credit-default-ml-pipeline"
 
 data:
-  raw_path: "data/raw/default_of_credit_card_clients.csv"
+  raw_path: "data/raw/default_of_credit card clients.csv"
   processed_path: "data/processed/credit_default_cleaned.csv"
   raw_target_column: "default payment next month"
   target_column: "default_next_month"
-  test_size: 0.2
+  test_size: 0.25
   csv_header_row: 1
 
 random_state: 999
