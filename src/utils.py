@@ -32,6 +32,6 @@ def create_directories(config: dict) -> None:
     config : dict
         The configuration dictionary containing directory paths.
     """
-    Path(config['outputs']['model_dir']).mkdiir(parents=True, exist_ok=True)
+    Path(config['outputs']['model_dir']).mkdir(parents=True, exist_ok=True)
     Path(config['outputs']['report_dir']).mkdir(parents=True, exist_ok=True)
     Path("reports/images").mkdir(parents=True, exist_ok=True)
