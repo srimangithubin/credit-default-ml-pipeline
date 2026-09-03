@@ -8,7 +8,6 @@ saves the processed dataset.
 
 from pathlib import Path
 import pandas as pd
-from xgboost import config
 from src.utils import load_config, create_directories
 
 def load_raw_data(config: dict) -> pd.DataFrame:

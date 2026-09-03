@@ -305,3 +305,169 @@ def save_feature_importance(
 
     print("\nTop 15 important features:")
     print(top_features)
+
+def main() -> None:
+    """
+    Run the full training workflows
+    """
+
+    print("Loading config")
+    config = load_config()
+    create_directories(config)
+
+    random_state = config["random_state"]
+    n_jobs = config["training"]["n_jobs"]
+    scoring = config["training"]["scoring"]
+
+    report_dir = Path(config['outputs']['report_dir'])
+    image_dir = Path('reports/images')
+    image_dir.mkdir(parents=True, exist_ok=True)
+
+    cv_results_path = Path(config["outputs"]["cv_results_path"])
+    tuned_results_path = Path(config["outputs"]["tuned_results_path"])
+    test_results_path = Path(config["outputs"]["test_results_path"])
+    model_path = Path(config["outputs"]["best_model_path"])
+    confusion_matrix_path = Path(config["outputs"]["confusion_matrix_path"])
+    roc_curve_path = Path(config["outputs"]["roc_curve_path"])
+
+    print("loading processed data")
+    df = load_processed_data(config)
+
+    target_column = config['data']['target_column']
+
+    print("Dataset shape:", df.shape)
+    print("\nTarget distribution:")
+    print(df[target_column].value_counts())
+
+    X, y = split_features_target(df, target_column)
+
+    X_train, X_test, y_train, y_test = create_train_test_split(X, y, config)
+
+    print("\nTrain shape:", X_train.shape)
+    print("Test shape:", X_test.shape)
+
+    cv = StratifiedKFold(
+        n_splits=config["cross_validation"]["n_splits"],
+        shuffle=config["cross_validation"]["shuffle"],
+        random_state=random_state,
+    )
+
+    models = build_models(
+        random_state = random_state,
+        n_jobs = n_jobs,)
+
+    print("\nRunning cross-validation for all models...")
+    cv_results = []
+
+    for model_name, pipeline in models.items():
+        print(f"Running CV for {model_name}...")
+
+        result = run_cross_validation(
+        model_name=model_name,
+        pipeline=pipeline,
+        X_train=X_train,
+        y_train=y_train,
+        cv=cv,
+        n_jobs=n_jobs,
+        )
+        cv_results.append(result)
+
+    cv_results_df = pd.DataFrame(cv_results).sort_values(
+        by='cv_f1', ascending=False
+   )
+    cv_results_df.to_csv(cv_results_path, index=False)
+
+    print("\nCross-validation results:")
+    print(cv_results_df)
+
+    print("\nRunning hyperparameter tuning...")
+    tuning_results = []
+
+    for model_name, pipeline in models.items():
+        model_config = config["models"].get(model_name)
+
+        if model_config is None:
+            print(f"Skipping {model_name}: not found in config.")
+            continue
+
+        if model_config["enabled"] is False:
+            print(f"Skipping {model_name}: disabled in config.")
+            continue
+
+
+        result = tune_model(
+        model_name=model_name,
+        pipeline=pipeline,
+        param_grid=model_config["params"],
+        n_iter=model_config["n_iter"],
+        X_train=X_train,
+        y_train=y_train,
+        cv=cv,
+        scoring=scoring,
+        n_jobs=n_jobs,
+        random_state=random_state,
+        )
+
+        tuning_results.append(result)
+
+    tuned_results_df = pd.DataFrame(
+        [
+            {
+                "model": result["model"],
+                "best_cv_score": result["best_cv_score"],
+                "best_params": result["best_params"],
+            }
+            for result in tuning_results
+        ]
+    ).sort_values(by="best_cv_score", ascending=False)
+
+    tuned_results_df.to_csv(tuned_results_path, index=False)
+
+    best_result = max(
+        tuning_results,
+        key=lambda result: result["best_cv_score"],
+    )
+
+    best_model_name = best_result["model"]
+    best_model = best_result["best_estimator"]
+
+    print("\nBest tuned model selected:")
+    print("Model:", best_model_name)
+    print("Best CV score:", best_result["best_cv_score"])
+    print("Best parameters:", best_result["best_params"])
+    print("\nEvaluating best model on test set...")
+
+    test_results = evaluate_model(
+        model_name=best_model_name,
+        fitted_model=best_model,
+        X_test=X_test,
+        y_test=y_test,
+        confusion_matrix_path=confusion_matrix_path,
+        roc_curve_path=roc_curve_path,
+    )
+
+    test_results_df = pd.DataFrame([test_results])
+    test_results_df.to_csv(test_results_path, index=False)
+
+    save_feature_importance(
+        model_name=best_model_name,
+        fitted_model=best_model,
+        X_train=X_train,
+        report_dir=report_dir,
+        image_dir=image_dir,
+    )
+
+    joblib.dump(best_model, model_path)
+
+    print("\nSaved files:")
+    print("CV results:", cv_results_path)
+    print("Tuned results:", tuned_results_path)
+    print("Test results:", test_results_path)
+    print("Confusion matrix:", confusion_matrix_path)
+    print("ROC curve:", roc_curve_path)
+    print("Best model:", model_path)
+    print("\nTraining workflow completed successfully.")
+
+
+if __name__ == "__main__":
+    main()

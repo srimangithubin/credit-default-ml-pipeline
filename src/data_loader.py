@@ -28,7 +28,7 @@ def load_processed_data(config: dict)-> pd.DataFrame:
 
     return df
 
-def split_features_target(df: pd.DataFrame, target_column: str) -> tuple[pd.DataFrame, pd.series]:
+def split_features_target(df: pd.DataFrame, target_column: str) -> tuple[pd.DataFrame, pd.Series]:
     """
     Split the DataFrame into features and target based on the specified target column.
     parameters
