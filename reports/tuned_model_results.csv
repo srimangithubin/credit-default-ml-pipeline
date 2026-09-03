@@ -1,0 +1,5 @@
+model,best_cv_score,best_params
+random_forest,0.5450970895376479,"{'model__n_estimators': 200, 'model__min_samples_split': 2, 'model__min_samples_leaf': 10, 'model__max_features': 'log2', 'model__max_depth': 10}"
+gradient_boosting,0.4788777773501539,"{'model__subsample': 0.8, 'model__n_estimators': 200, 'model__min_samples_split': 5, 'model__min_samples_leaf': 5, 'model__max_depth': 4, 'model__learning_rate': 0.1}"
+xgboost,0.4780705446950164,"{'model__subsample': 0.8, 'model__n_estimators': 100, 'model__max_depth': 4, 'model__learning_rate': 0.1, 'model__colsample_bytree': 1.0}"
+logistic_regression,0.4733354164446456,"{'model__solver': 'liblinear', 'model__C': 0.1}"
