@@ -18,9 +18,11 @@ data/processed/*
 models/*
 !models/.gitkeep
 
-# Reports
-reports/*
-!reports/.gitkeep
+# Allow reports and images for portfolio
+!reports/
+!reports/images/
+!reports/*.csv
+!reports/images/*.png
 
 # Jupyter
 .ipynb_checkpoints/
